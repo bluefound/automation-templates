@@ -1,0 +1,1090 @@
+{
+    "name": "Paid Invoice Email Sequence",
+    "flow": [
+        {
+            "id": 1,
+            "module": "stripe:watchEvents",
+            "version": 1,
+            "parameters": {
+                "__IMTHOOK__": 1981720
+            },
+            "mapper": {},
+            "metadata": {
+                "designer": {
+                    "x": 0,
+                    "y": 150
+                },
+                "restore": {
+                    "parameters": {
+                        "__IMTHOOK__": {
+                            "data": {
+                                "editable": "false"
+                            },
+                            "label": "Stripe - Duncan Rogoff"
+                        }
+                    }
+                },
+                "parameters": [
+                    {
+                        "name": "__IMTHOOK__",
+                        "type": "hook:stripe2",
+                        "label": "Webhook",
+                        "required": true
+                    }
+                ],
+                "interface": [
+                    {
+                        "name": "created",
+                        "type": "date",
+                        "label": "Created"
+                    },
+                    {
+                        "name": "event_type",
+                        "type": "text",
+                        "label": "Event Type"
+                    },
+                    {
+                        "name": "event_id",
+                        "type": "text",
+                        "label": "Event ID"
+                    },
+                    {
+                        "name": "object",
+                        "spec": [
+                            {
+                                "name": "id",
+                                "type": "text",
+                                "label": "Id"
+                            },
+                            {
+                                "name": "object",
+                                "type": "text",
+                                "label": "Object"
+                            },
+                            {
+                                "name": "amount_due",
+                                "type": "number",
+                                "label": "Amount due"
+                            },
+                            {
+                                "name": "application_fee",
+                                "type": "text",
+                                "label": "Application fee"
+                            },
+                            {
+                                "name": "attempt_count",
+                                "type": "number",
+                                "label": "Attempt count"
+                            },
+                            {
+                                "name": "attempted",
+                                "type": "boolean",
+                                "label": "Attempted"
+                            },
+                            {
+                                "name": "billing",
+                                "type": "text",
+                                "label": "Billing"
+                            },
+                            {
+                                "name": "charge",
+                                "type": "text",
+                                "label": "Charge"
+                            },
+                            {
+                                "name": "closed",
+                                "type": "boolean",
+                                "label": "Closed"
+                            },
+                            {
+                                "name": "currency",
+                                "type": "text",
+                                "label": "Currency"
+                            },
+                            {
+                                "name": "customer",
+                                "type": "text",
+                                "label": "Customer"
+                            },
+                            {
+                                "name": "date",
+                                "type": "number",
+                                "label": "Date"
+                            },
+                            {
+                                "name": "description",
+                                "type": "text",
+                                "label": "Description"
+                            },
+                            {
+                                "name": "discount",
+                                "type": "text",
+                                "label": "Discount"
+                            },
+                            {
+                                "name": "due_date",
+                                "type": "text",
+                                "label": "Due date"
+                            },
+                            {
+                                "name": "ending_balance",
+                                "type": "text",
+                                "label": "Ending balance"
+                            },
+                            {
+                                "name": "forgiven",
+                                "type": "boolean",
+                                "label": "Forgiven"
+                            },
+                            {
+                                "name": "lines",
+                                "spec": [
+                                    {
+                                        "name": "data",
+                                        "spec": [
+                                            {
+                                                "name": "id",
+                                                "type": "text",
+                                                "label": "Id"
+                                            },
+                                            {
+                                                "name": "object",
+                                                "type": "text",
+                                                "label": "Object"
+                                            },
+                                            {
+                                                "name": "amount",
+                                                "type": "number",
+                                                "label": "Amount"
+                                            },
+                                            {
+                                                "name": "currency",
+                                                "type": "text",
+                                                "label": "Currency"
+                                            },
+                                            {
+                                                "name": "description",
+                                                "type": "text",
+                                                "label": "Description"
+                                            },
+                                            {
+                                                "name": "discountable",
+                                                "type": "boolean",
+                                                "label": "Discountable"
+                                            },
+                                            {
+                                                "name": "livemode",
+                                                "type": "boolean",
+                                                "label": "Livemode"
+                                            },
+                                            {
+                                                "name": "metadata",
+                                                "spec": [],
+                                                "type": "collection",
+                                                "label": "Metadata"
+                                            },
+                                            {
+                                                "name": "period",
+                                                "spec": [
+                                                    {
+                                                        "name": "start",
+                                                        "type": "number",
+                                                        "label": "Start"
+                                                    },
+                                                    {
+                                                        "name": "end",
+                                                        "type": "number",
+                                                        "label": "End"
+                                                    }
+                                                ],
+                                                "type": "collection",
+                                                "label": "Period"
+                                            },
+                                            {
+                                                "name": "plan",
+                                                "spec": [
+                                                    {
+                                                        "name": "id",
+                                                        "type": "text",
+                                                        "label": "Id"
+                                                    },
+                                                    {
+                                                        "name": "object",
+                                                        "type": "text",
+                                                        "label": "Object"
+                                                    },
+                                                    {
+                                                        "name": "amount",
+                                                        "type": "number",
+                                                        "label": "Amount"
+                                                    },
+                                                    {
+                                                        "name": "created",
+                                                        "type": "number",
+                                                        "label": "Created"
+                                                    },
+                                                    {
+                                                        "name": "currency",
+                                                        "type": "text",
+                                                        "label": "Currency"
+                                                    },
+                                                    {
+                                                        "name": "interval",
+                                                        "type": "text",
+                                                        "label": "Interval"
+                                                    },
+                                                    {
+                                                        "name": "interval_count",
+                                                        "type": "number",
+                                                        "label": "Interval count"
+                                                    },
+                                                    {
+                                                        "name": "livemode",
+                                                        "type": "boolean",
+                                                        "label": "Livemode"
+                                                    },
+                                                    {
+                                                        "name": "metadata",
+                                                        "spec": [],
+                                                        "type": "collection",
+                                                        "label": "Metadata"
+                                                    },
+                                                    {
+                                                        "name": "nickname",
+                                                        "type": "text",
+                                                        "label": "Nickname"
+                                                    },
+                                                    {
+                                                        "name": "product",
+                                                        "type": "text",
+                                                        "label": "Product"
+                                                    },
+                                                    {
+                                                        "name": "trial_period_days",
+                                                        "type": "text",
+                                                        "label": "Trial period days"
+                                                    }
+                                                ],
+                                                "type": "collection",
+                                                "label": "Plan"
+                                            },
+                                            {
+                                                "name": "proration",
+                                                "type": "boolean",
+                                                "label": "Proration"
+                                            },
+                                            {
+                                                "name": "quantity",
+                                                "type": "number",
+                                                "label": "Quantity"
+                                            },
+                                            {
+                                                "name": "subscription",
+                                                "type": "text",
+                                                "label": "Subscription"
+                                            },
+                                            {
+                                                "name": "subscription_item",
+                                                "type": "text",
+                                                "label": "Subscription item"
+                                            },
+                                            {
+                                                "name": "type",
+                                                "type": "text",
+                                                "label": "Type"
+                                            }
+                                        ],
+                                        "type": "array",
+                                        "label": "Data"
+                                    },
+                                    {
+                                        "name": "has_more",
+                                        "type": "boolean",
+                                        "label": "Has more"
+                                    },
+                                    {
+                                        "name": "object",
+                                        "type": "text",
+                                        "label": "Object"
+                                    },
+                                    {
+                                        "name": "url",
+                                        "type": "text",
+                                        "label": "Url"
+                                    }
+                                ],
+                                "type": "collection",
+                                "label": "Lines"
+                            },
+                            {
+                                "name": "livemode",
+                                "type": "boolean",
+                                "label": "Livemode"
+                            },
+                            {
+                                "name": "metadata",
+                                "spec": [],
+                                "type": "collection",
+                                "label": "Metadata"
+                            },
+                            {
+                                "name": "next_payment_attempt",
+                                "type": "number",
+                                "label": "Next payment attempt"
+                            },
+                            {
+                                "name": "number",
+                                "type": "text",
+                                "label": "Number"
+                            },
+                            {
+                                "name": "paid",
+                                "type": "boolean",
+                                "label": "Paid"
+                            },
+                            {
+                                "name": "period_end",
+                                "type": "number",
+                                "label": "Period end"
+                            },
+                            {
+                                "name": "period_start",
+                                "type": "number",
+                                "label": "Period start"
+                            },
+                            {
+                                "name": "receipt_number",
+                                "type": "text",
+                                "label": "Receipt number"
+                            },
+                            {
+                                "name": "starting_balance",
+                                "type": "number",
+                                "label": "Starting balance"
+                            },
+                            {
+                                "name": "statement_descriptor",
+                                "type": "text",
+                                "label": "Statement descriptor"
+                            },
+                            {
+                                "name": "subscription",
+                                "type": "text",
+                                "label": "Subscription"
+                            },
+                            {
+                                "name": "subtotal",
+                                "type": "number",
+                                "label": "Subtotal"
+                            },
+                            {
+                                "name": "tax",
+                                "type": "text",
+                                "label": "Tax"
+                            },
+                            {
+                                "name": "tax_percent",
+                                "type": "text",
+                                "label": "Tax percent"
+                            },
+                            {
+                                "name": "total",
+                                "type": "number",
+                                "label": "Total"
+                            },
+                            {
+                                "name": "webhooks_delivered_at",
+                                "type": "text",
+                                "label": "Webhooks delivered at"
+                            }
+                        ],
+                        "type": "collection",
+                        "label": "Object"
+                    },
+                    {
+                        "name": "raw",
+                        "spec": [],
+                        "type": "collection",
+                        "label": "Raw Webhook Data"
+                    }
+                ]
+            }
+        },
+        {
+            "id": 2,
+            "module": "util:SetVariables",
+            "version": 1,
+            "parameters": {},
+            "mapper": {
+                "scope": "roundtrip",
+                "variables": [
+                    {
+                        "name": "Client Full Name",
+                        "value": "{{1.object.customer_name}}"
+                    },
+                    {
+                        "name": "Client First Name",
+                        "value": "{{get(split(1.object.customer_name; space); 1)}}"
+                    },
+                    {
+                        "name": "Client Email",
+                        "value": "{{1.object.customer_email}}"
+                    }
+                ]
+            },
+            "metadata": {
+                "designer": {
+                    "x": 300,
+                    "y": 150,
+                    "name": "Set Name + Email"
+                },
+                "restore": {
+                    "expect": {
+                        "scope": {
+                            "label": "One cycle"
+                        },
+                        "variables": {
+                            "items": [
+                                null,
+                                null,
+                                null
+                            ]
+                        }
+                    }
+                },
+                "expect": [
+                    {
+                        "name": "variables",
+                        "spec": [
+                            {
+                                "name": "name",
+                                "type": "text",
+                                "label": "Variable name",
+                                "required": true
+                            },
+                            {
+                                "name": "value",
+                                "type": "any",
+                                "label": "Variable value"
+                            }
+                        ],
+                        "type": "array",
+                        "label": "Variables"
+                    },
+                    {
+                        "name": "scope",
+                        "type": "select",
+                        "label": "Variable lifetime",
+                        "required": true,
+                        "validate": {
+                            "enum": [
+                                "roundtrip",
+                                "execution"
+                            ]
+                        }
+                    }
+                ],
+                "interface": [
+                    {
+                        "name": "Client Full Name",
+                        "type": "any",
+                        "label": "Client Full Name"
+                    },
+                    {
+                        "name": "Client First Name",
+                        "type": "any",
+                        "label": "Client First Name"
+                    },
+                    {
+                        "name": "Client Email",
+                        "type": "any",
+                        "label": "Client Email"
+                    }
+                ]
+            }
+        },
+        {
+            "id": 4,
+            "module": "util:FunctionSleep",
+            "version": 1,
+            "parameters": {},
+            "mapper": {
+                "duration": "240"
+            },
+            "metadata": {
+                "designer": {
+                    "x": 600,
+                    "y": 150,
+                    "name": "Wait 4 Minutes"
+                },
+                "restore": {},
+                "expect": [
+                    {
+                        "name": "duration",
+                        "type": "uinteger",
+                        "label": "Delay",
+                        "required": true,
+                        "validate": {
+                            "max": 300,
+                            "min": 1
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "id": 6,
+            "module": "builtin:BasicRouter",
+            "version": 1,
+            "mapper": null,
+            "metadata": {
+                "designer": {
+                    "x": 900,
+                    "y": 150
+                }
+            },
+            "routes": [
+                {
+                    "flow": [
+                        {
+                            "id": 3,
+                            "module": "email:ActionSendEmail",
+                            "version": 7,
+                            "parameters": {
+                                "account": 3480240,
+                                "saveAfterSent": false
+                            },
+                            "mapper": {
+                                "cc": [],
+                                "to": [
+                                    "{{2.`Client Email`}}"
+                                ],
+                                "bcc": [],
+                                "from": "",
+                                "html": "Hi {{2.`Client First Name`}},\n<br><br>\nThanks for taking care of that invoice so promptly. I'm really looking forward to working together, and I'm confident we can nail this for you.\n<br><br>\nI'll send you some onboarding instructions + a calendar in a moment and we can then book a call to kick off the project.\n<br><br>\nTalk soon! \n<br><br>\nThanks again,<br>\nDuncan",
+                                "sender": "",
+                                "headers": [],
+                                "replyTo": "",
+                                "subject": "Thank you & welcome aboard",
+                                "priority": "normal",
+                                "inReplyTo": "",
+                                "references": [],
+                                "attachments": [],
+                                "contentType": "html"
+                            },
+                            "metadata": {
+                                "designer": {
+                                    "x": 1200,
+                                    "y": 0,
+                                    "name": "Send Thank You Email"
+                                },
+                                "restore": {
+                                    "expect": {
+                                        "cc": {
+                                            "mode": "chose"
+                                        },
+                                        "to": {
+                                            "mode": "chose",
+                                            "items": [
+                                                null
+                                            ]
+                                        },
+                                        "bcc": {
+                                            "mode": "chose"
+                                        },
+                                        "priority": {
+                                            "label": "Normal"
+                                        },
+                                        "references": {
+                                            "mode": "chose"
+                                        },
+                                        "attachments": {
+                                            "mode": "chose"
+                                        },
+                                        "contentType": {
+                                            "label": "HTML"
+                                        }
+                                    },
+                                    "parameters": {
+                                        "account": {
+                                            "data": {
+                                                "scoped": "true",
+                                                "connection": "google-restricted"
+                                            },
+                                            "label": "AI News (duncanrogoff@gmail.com)"
+                                        },
+                                        "saveAfterSent": {
+                                            "label": "No"
+                                        }
+                                    }
+                                },
+                                "parameters": [
+                                    {
+                                        "name": "account",
+                                        "type": "account:smtp,google-restricted,microsoft-smtp-imap",
+                                        "label": "Connection",
+                                        "required": true
+                                    },
+                                    {
+                                        "name": "saveAfterSent",
+                                        "type": "select",
+                                        "label": "Save message after sending",
+                                        "required": true,
+                                        "validate": {
+                                            "enum": [
+                                                true,
+                                                false
+                                            ]
+                                        }
+                                    },
+                                    {
+                                        "type": "hidden"
+                                    }
+                                ],
+                                "expect": [
+                                    {
+                                        "name": "to",
+                                        "spec": {
+                                            "name": "value",
+                                            "type": "email",
+                                            "label": "Email address",
+                                            "required": true
+                                        },
+                                        "type": "array",
+                                        "label": "To",
+                                        "required": true
+                                    },
+                                    {
+                                        "name": "subject",
+                                        "type": "text",
+                                        "label": "Subject"
+                                    },
+                                    {
+                                        "name": "contentType",
+                                        "type": "select",
+                                        "label": "Content Type",
+                                        "required": true,
+                                        "validate": {
+                                            "enum": [
+                                                "html",
+                                                "text"
+                                            ]
+                                        }
+                                    },
+                                    {
+                                        "name": "attachments",
+                                        "spec": [
+                                            {
+                                                "name": "fileName",
+                                                "type": "filename",
+                                                "label": "File name",
+                                                "required": true,
+                                                "semantic": "file:name"
+                                            },
+                                            {
+                                                "name": "data",
+                                                "type": "buffer",
+                                                "label": "Data",
+                                                "required": true,
+                                                "semantic": "file:data"
+                                            },
+                                            {
+                                                "name": "cid",
+                                                "type": "text",
+                                                "label": "Content-ID"
+                                            }
+                                        ],
+                                        "type": "array",
+                                        "label": "Attachments"
+                                    },
+                                    {
+                                        "name": "cc",
+                                        "spec": {
+                                            "name": "value",
+                                            "type": "email",
+                                            "label": "Email address"
+                                        },
+                                        "type": "array",
+                                        "label": "Copy recipient"
+                                    },
+                                    {
+                                        "name": "bcc",
+                                        "spec": {
+                                            "name": "value",
+                                            "type": "email",
+                                            "label": "Email address"
+                                        },
+                                        "type": "array",
+                                        "label": "Blind copy recipient"
+                                    },
+                                    {
+                                        "name": "from",
+                                        "type": "text",
+                                        "label": "From"
+                                    },
+                                    {
+                                        "name": "sender",
+                                        "type": "text",
+                                        "label": "Sender"
+                                    },
+                                    {
+                                        "name": "replyTo",
+                                        "type": "text",
+                                        "label": "Reply-To"
+                                    },
+                                    {
+                                        "name": "inReplyTo",
+                                        "type": "text",
+                                        "label": "In-Reply-To"
+                                    },
+                                    {
+                                        "name": "references",
+                                        "spec": {
+                                            "name": "value",
+                                            "type": "text",
+                                            "label": "Reference",
+                                            "required": true
+                                        },
+                                        "type": "array",
+                                        "label": "References"
+                                    },
+                                    {
+                                        "name": "priority",
+                                        "type": "select",
+                                        "label": "Priority",
+                                        "validate": {
+                                            "enum": [
+                                                "high",
+                                                "normal",
+                                                "low"
+                                            ]
+                                        }
+                                    },
+                                    {
+                                        "name": "headers",
+                                        "spec": [
+                                            {
+                                                "name": "key",
+                                                "type": "text",
+                                                "label": "Key",
+                                                "required": true
+                                            },
+                                            {
+                                                "name": "value",
+                                                "type": "text",
+                                                "label": "Value",
+                                                "required": true
+                                            }
+                                        ],
+                                        "type": "array",
+                                        "label": "Headers"
+                                    },
+                                    {
+                                        "name": "html",
+                                        "type": "text",
+                                        "label": "Content"
+                                    }
+                                ]
+                            }
+                        }
+                    ]
+                },
+                {
+                    "flow": [
+                        {
+                            "id": 7,
+                            "module": "util:FunctionSleep",
+                            "version": 1,
+                            "parameters": {},
+                            "mapper": {
+                                "duration": "180"
+                            },
+                            "metadata": {
+                                "designer": {
+                                    "x": 1200,
+                                    "y": 300,
+                                    "name": "Wait 3 Minutes"
+                                },
+                                "restore": {},
+                                "expect": [
+                                    {
+                                        "name": "duration",
+                                        "type": "uinteger",
+                                        "label": "Delay",
+                                        "required": true,
+                                        "validate": {
+                                            "max": 300,
+                                            "min": 1
+                                        }
+                                    }
+                                ]
+                            }
+                        },
+                        {
+                            "id": 5,
+                            "module": "email:ActionSendEmail",
+                            "version": 7,
+                            "parameters": {
+                                "account": 3480240,
+                                "saveAfterSent": false
+                            },
+                            "mapper": {
+                                "cc": [],
+                                "to": [
+                                    "{{2.`Client Email`}}"
+                                ],
+                                "bcc": [],
+                                "from": "",
+                                "html": "Hi {{2.`Client First Name`}},\n<br><br>\nJust following up on my last email. Our next step is booking an onboarding call.\n<br><br>\nTLDR: Automation services often involve a number of platforms, which can be logistically tricky to manage (2FA, credential sharing, etc).\n<br><br>\nI usually take care of all of that on a quick onboarding call where we set up the groundwork live on a screenshare in ~20 minutes.\n<br><br>\nThis also gives us a chance to go over timelines, talk about comms/expectations, solve pesky 2FA problems, and answer any last-minute q's.\n<br><br>\n<a href=\"https://calendly.com/duncanrogoff-achm/client-kickoff\">Do you mind booking a slot here?</a>\n<br><br>\nIdeally, we'd do this in the next 72 hours or so, but I am cognizant of your schedule. Let me know whenever works best for you (and if you need anything else in the meantime).\n<br><br>\nThank you,<br>\nDuncan",
+                                "sender": "",
+                                "headers": [],
+                                "replyTo": "",
+                                "subject": "Next steps",
+                                "priority": "normal",
+                                "inReplyTo": "",
+                                "references": [],
+                                "attachments": [],
+                                "contentType": "html"
+                            },
+                            "metadata": {
+                                "designer": {
+                                    "x": 1500,
+                                    "y": 300,
+                                    "name": "Send Onboarding + Next Steps Email"
+                                },
+                                "restore": {
+                                    "expect": {
+                                        "cc": {
+                                            "mode": "chose"
+                                        },
+                                        "to": {
+                                            "mode": "chose",
+                                            "items": [
+                                                null
+                                            ]
+                                        },
+                                        "bcc": {
+                                            "mode": "chose"
+                                        },
+                                        "priority": {
+                                            "label": "Normal"
+                                        },
+                                        "references": {
+                                            "mode": "chose"
+                                        },
+                                        "attachments": {
+                                            "mode": "chose"
+                                        },
+                                        "contentType": {
+                                            "label": "HTML"
+                                        }
+                                    },
+                                    "parameters": {
+                                        "account": {
+                                            "data": {
+                                                "scoped": "true",
+                                                "connection": "google-restricted"
+                                            },
+                                            "label": "AI News (duncanrogoff@gmail.com)"
+                                        },
+                                        "saveAfterSent": {
+                                            "label": "No"
+                                        }
+                                    }
+                                },
+                                "parameters": [
+                                    {
+                                        "name": "account",
+                                        "type": "account:smtp,google-restricted,microsoft-smtp-imap",
+                                        "label": "Connection",
+                                        "required": true
+                                    },
+                                    {
+                                        "name": "saveAfterSent",
+                                        "type": "select",
+                                        "label": "Save message after sending",
+                                        "required": true,
+                                        "validate": {
+                                            "enum": [
+                                                true,
+                                                false
+                                            ]
+                                        }
+                                    },
+                                    {
+                                        "type": "hidden"
+                                    }
+                                ],
+                                "expect": [
+                                    {
+                                        "name": "to",
+                                        "spec": {
+                                            "name": "value",
+                                            "type": "email",
+                                            "label": "Email address",
+                                            "required": true
+                                        },
+                                        "type": "array",
+                                        "label": "To",
+                                        "required": true
+                                    },
+                                    {
+                                        "name": "subject",
+                                        "type": "text",
+                                        "label": "Subject"
+                                    },
+                                    {
+                                        "name": "contentType",
+                                        "type": "select",
+                                        "label": "Content Type",
+                                        "required": true,
+                                        "validate": {
+                                            "enum": [
+                                                "html",
+                                                "text"
+                                            ]
+                                        }
+                                    },
+                                    {
+                                        "name": "attachments",
+                                        "spec": [
+                                            {
+                                                "name": "fileName",
+                                                "type": "filename",
+                                                "label": "File name",
+                                                "required": true,
+                                                "semantic": "file:name"
+                                            },
+                                            {
+                                                "name": "data",
+                                                "type": "buffer",
+                                                "label": "Data",
+                                                "required": true,
+                                                "semantic": "file:data"
+                                            },
+                                            {
+                                                "name": "cid",
+                                                "type": "text",
+                                                "label": "Content-ID"
+                                            }
+                                        ],
+                                        "type": "array",
+                                        "label": "Attachments"
+                                    },
+                                    {
+                                        "name": "cc",
+                                        "spec": {
+                                            "name": "value",
+                                            "type": "email",
+                                            "label": "Email address"
+                                        },
+                                        "type": "array",
+                                        "label": "Copy recipient"
+                                    },
+                                    {
+                                        "name": "bcc",
+                                        "spec": {
+                                            "name": "value",
+                                            "type": "email",
+                                            "label": "Email address"
+                                        },
+                                        "type": "array",
+                                        "label": "Blind copy recipient"
+                                    },
+                                    {
+                                        "name": "from",
+                                        "type": "text",
+                                        "label": "From"
+                                    },
+                                    {
+                                        "name": "sender",
+                                        "type": "text",
+                                        "label": "Sender"
+                                    },
+                                    {
+                                        "name": "replyTo",
+                                        "type": "text",
+                                        "label": "Reply-To"
+                                    },
+                                    {
+                                        "name": "inReplyTo",
+                                        "type": "text",
+                                        "label": "In-Reply-To"
+                                    },
+                                    {
+                                        "name": "references",
+                                        "spec": {
+                                            "name": "value",
+                                            "type": "text",
+                                            "label": "Reference",
+                                            "required": true
+                                        },
+                                        "type": "array",
+                                        "label": "References"
+                                    },
+                                    {
+                                        "name": "priority",
+                                        "type": "select",
+                                        "label": "Priority",
+                                        "validate": {
+                                            "enum": [
+                                                "high",
+                                                "normal",
+                                                "low"
+                                            ]
+                                        }
+                                    },
+                                    {
+                                        "name": "headers",
+                                        "spec": [
+                                            {
+                                                "name": "key",
+                                                "type": "text",
+                                                "label": "Key",
+                                                "required": true
+                                            },
+                                            {
+                                                "name": "value",
+                                                "type": "text",
+                                                "label": "Value",
+                                                "required": true
+                                            }
+                                        ],
+                                        "type": "array",
+                                        "label": "Headers"
+                                    },
+                                    {
+                                        "name": "html",
+                                        "type": "text",
+                                        "label": "Content"
+                                    }
+                                ]
+                            }
+                        }
+                    ]
+                }
+            ]
+        }
+    ],
+    "metadata": {
+        "instant": true,
+        "version": 1,
+        "scenario": {
+            "roundtrips": 1,
+            "maxErrors": 3,
+            "autoCommit": true,
+            "autoCommitTriggerLast": true,
+            "sequential": false,
+            "slots": null,
+            "confidential": false,
+            "dataloss": false,
+            "dlq": false,
+            "freshVariables": false
+        },
+        "designer": {
+            "orphans": []
+        },
+        "zone": "us1.make.com",
+        "notes": []
+    }
+}
