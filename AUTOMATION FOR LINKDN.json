@@ -1,0 +1,2932 @@
+{
+  "name": "LinkedIn Agent",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "triggerAtHour": 7
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -6500,
+        1900
+      ],
+      "id": "165eee7d-b836-4764-832d-e08a820e2b62",
+      "name": "Schedule Trigger4"
+    },
+    {
+      "parameters": {
+        "authentication": "airtableOAuth2Api",
+        "operation": "search",
+        "base": {
+          "__rl": true,
+          "value": "appQ4oga8PGMIYQeH",
+          "mode": "list",
+          "cachedResultName": "n8n - Social Content - YT",
+          "cachedResultUrl": "https://airtable.com/appQ4oga8PGMIYQeH"
+        },
+        "table": {
+          "__rl": true,
+          "value": "tblZwA0JCNPeORaGi",
+          "mode": "list",
+          "cachedResultName": "Social Posts",
+          "cachedResultUrl": "https://airtable.com/appQ4oga8PGMIYQeH/tblZwA0JCNPeORaGi"
+        },
+        "filterByFormula": "AND({Status}=\"Waiting for Content\", FIND(\"LinkedIn\", {socialChannels}))",
+        "options": {},
+        "sort": {
+          "property": [
+            {
+              "field": "sourceSummary"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2.1,
+      "position": [
+        -6320,
+        1900
+      ],
+      "id": "e072f4c8-c205-4a32-a68b-e99f5bab5e81",
+      "name": "getSource1",
+      "credentials": {
+        "airtableOAuth2Api": {
+          "id": "43DLhjkp9uNMf9CX",
+          "name": "Duncan's Airtable"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "toolDescription": "Call this tool for research",
+        "method": "POST",
+        "url": "https://api.openai.com/v1/chat/completions",
+        "sendHeaders": true,
+        "parametersHeaders": {
+          "values": [
+            {
+              "name": "Authorization",
+              "valueProvider": "fieldValue",
+              "value": "Bearer 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"
+            },
+            {
+              "name": "Content-type",
+              "valueProvider": "fieldValue",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"model\": \"gpt-4o-mini-search-preview\",\n  \"web_search_options\": {\n    \"search_context_size\": \"low\"\n  },\n  \"messages\": [\n    {\n      \"role\": \"user\",\n      \"content\": \"{placeholder}\"\n    }\n  ]\n}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.toolHttpRequest",
+      "typeVersion": 1.1,
+      "position": [
+        -5400,
+        2120
+      ],
+      "id": "8980e6c7-d0f7-47b8-888f-0dc0d8640c9f",
+      "name": "Research Internet1"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Create search queries for this news story\n\nheadline: {{ $json.sourceHeadline }}\nsummary: {{ $json.sourceSummary }}",
+        "options": {
+          "systemMessage": "=You are a search query generator for a linkedin research system. Given a source headline and summary, output 4 targeted queries (≤15 words each) to gather diverse, high-quality data. Include:\n\n1. Recent statistics and data on [keyword] 2025  \n   *Finds current numerical insights and datasets.*  \n\n2. Case studies real-world examples [keyword] implementation 2025  \n   *Uncovers practical applications and success/failure stories.*  \n\n3. Expert opinions quotes [keyword] trends challenges 2025  \n   *Captures authoritative perspectives and emerging developments.*  \n\n4. Competing content analysis common questions [keyword] 2025  \n   *Identifies top-ranking articles and audience pain points.*  \n\nQueries must be concise, specific, and optimized for authoritative sources. No extra text."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1.8,
+      "position": [
+        -5880,
+        1900
+      ],
+      "id": "6468ef20-d226-4b44-9eca-0fac8b1b4eb9",
+      "name": "Query Generator1"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Search everything about: {{ $json.output }}",
+        "options": {
+          "systemMessage": "=You are a research agent in a multi-agent blog creation system. Your task is to gather concise, high-quality information for a keyword using the provided research and output it in a condensed format. Follow these rules strictly:\n\n[OUTPUT FORMAT]:\n- Use bullet points.\n- Each bullet must include:\n  - Key Insight: 1 concise sentence (max 20 words).\n  - Implication: Always include\n- Example:\n  - Statistic: 'Global AI market to reach $47.1B by 2030.' The projected $47.1B global AI market by 2030 indicates immense economic potential while heightening the need for robust governance frameworks.\n\n[RULES]:\n1. Prioritize recent data (past year {{ $now }}), authoritative sources, and diverse angles (stats, trends, pain points, case studies, expert opinions). **Focus on extracting the most significant and impactful insights that provide a strong overview of the topic.**\n2. Exclude explanations, opinions, or irrelevant details. **Ensure each key insight is a core finding directly supported by the research.**\n3. Add no extra commentary.\n4. **Limit the total number of bullet points in your output to a maximum of [Number - e.g., 8-12]. This constraint requires you to be highly selective and prioritize the most crucial information.**\n5. **Before generating the bullet points, take a moment to internally summarize the main themes and key takeaways from the entire research document. Use this summary to guide your selection of the most important individual insights to include as bullet points.**\n6. **When you find multiple sources reporting similar information, select the most recent, authoritative, or statistically significant data point and cite that source. Avoid including redundant bullet points.**\n7. **Aim to cover the most critical aspects of the research, such as market size, adoption trends, key applications, implications of the story, and significant expert opinions, within the limited number of bullet points.**"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1.8,
+      "position": [
+        -5560,
+        1900
+      ],
+      "id": "befa21ad-cc7c-47f2-8f9d-4c27ace48b68",
+      "name": "Researcher1"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "gpt-4o-mini",
+          "mode": "list",
+          "cachedResultName": "gpt-4o-mini"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        -5660,
+        2140
+      ],
+      "id": "a1dec319-a643-4c37-85e9-e86414e3288e",
+      "name": "gpt-4o-mini1",
+      "credentials": {
+        "openAiApi": {
+          "id": "T48ghmUDQ7z0HSKB",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "authentication": "airtableOAuth2Api",
+        "base": {
+          "__rl": true,
+          "value": "appQ4oga8PGMIYQeH",
+          "mode": "list",
+          "cachedResultName": "n8n - Social Content - YT",
+          "cachedResultUrl": "https://airtable.com/appQ4oga8PGMIYQeH"
+        },
+        "table": {
+          "__rl": true,
+          "value": "tblki4OkwIYoml1cw",
+          "mode": "list",
+          "cachedResultName": "Brand Guidelines",
+          "cachedResultUrl": "https://airtable.com/appQ4oga8PGMIYQeH/tblki4OkwIYoml1cw"
+        },
+        "id": "reca5epfkCn8SXviS",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2.1,
+      "position": [
+        -5040,
+        1900
+      ],
+      "id": "4ef6f136-5c5c-4791-99a2-559aede90a54",
+      "name": "getBrandGuidelines1",
+      "credentials": {
+        "airtableOAuth2Api": {
+          "id": "43DLhjkp9uNMf9CX",
+          "name": "Duncan's Airtable"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "gpt-4o",
+          "mode": "list",
+          "cachedResultName": "gpt-4o"
+        },
+        "options": {
+          "temperature": 0.7
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        -4820,
+        2120
+      ],
+      "id": "33816342-869d-459e-afdf-ad852cd41b3b",
+      "name": "OpenAI Chat Model5",
+      "credentials": {
+        "openAiApi": {
+          "id": "T48ghmUDQ7z0HSKB",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "381b17c9-7cbe-430d-b0af-db0a84aa613f",
+              "leftValue": "={{ $('getSource1').item.json['needsImage?'] }}",
+              "rightValue": "Yes",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -4500,
+        1900
+      ],
+      "id": "6c64e4a1-a0d5-47c6-9004-ec5c35fd3730",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "authentication": "airtableOAuth2Api",
+        "operation": "update",
+        "base": {
+          "__rl": true,
+          "value": "appQ4oga8PGMIYQeH",
+          "mode": "list",
+          "cachedResultName": "n8n - Social Content - YT",
+          "cachedResultUrl": "https://airtable.com/appQ4oga8PGMIYQeH"
+        },
+        "table": {
+          "__rl": true,
+          "value": "tblZwA0JCNPeORaGi",
+          "mode": "list",
+          "cachedResultName": "Social Posts",
+          "cachedResultUrl": "https://airtable.com/appC2QdqKVgYuAjKt/tblZwA0JCNPeORaGi"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "id": "={{ $('getSource1').item.json.id }}",
+            "linkedinCopy": "={{ $('LinkedIn Writer').item.json.text }}",
+            "Status": "Needs Approval",
+            "datePosted": "="
+          },
+          "matchingColumns": [
+            "id"
+          ],
+          "schema": [
+            {
+              "id": "id",
+              "displayName": "id",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": false
+            },
+            {
+              "id": "sourceHeadline",
+              "displayName": "sourceHeadline",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "sourceSummary",
+              "displayName": "sourceSummary",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "goToArticle",
+              "displayName": "goToArticle",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "sourceURL",
+              "displayName": "sourceURL",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "socialChannels",
+              "displayName": "socialChannels",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "array",
+              "options": [
+                {
+                  "name": "Twitter",
+                  "value": "Twitter"
+                },
+                {
+                  "name": "LinkedIn",
+                  "value": "LinkedIn"
+                },
+                {
+                  "name": "Blog",
+                  "value": "Blog"
+                },
+                {
+                  "name": "Instagram",
+                  "value": "Instagram"
+                },
+                {
+                  "name": "Facebook",
+                  "value": "Facebook"
+                }
+              ],
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "needsImage?",
+              "displayName": "needsImage?",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "options",
+              "options": [
+                {
+                  "name": "Yes",
+                  "value": "Yes"
+                },
+                {
+                  "name": "No",
+                  "value": "No"
+                }
+              ],
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "twitterCopy",
+              "displayName": "twitterCopy",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "linkedinCopy",
+              "displayName": "linkedinCopy",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "instagramCopy",
+              "displayName": "instagramCopy",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "facebookCopy",
+              "displayName": "facebookCopy",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "blogCopy",
+              "displayName": "blogCopy",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "imagePrompt",
+              "displayName": "imagePrompt",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "postImage",
+              "displayName": "postImage",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "array",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Status",
+              "displayName": "Status",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "options",
+              "options": [
+                {
+                  "name": "Waiting for Content",
+                  "value": "Waiting for Content"
+                },
+                {
+                  "name": "Needs Approval",
+                  "value": "Needs Approval"
+                },
+                {
+                  "name": "Approved",
+                  "value": "Approved"
+                },
+                {
+                  "name": "Posted",
+                  "value": "Posted"
+                }
+              ],
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "datePosted",
+              "displayName": "datePosted",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "ID",
+              "displayName": "ID",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2.1,
+      "position": [
+        -4140,
+        2140
+      ],
+      "id": "a7c12bf0-723b-4d72-a628-4b8ea2e95d79",
+      "name": "Airtable1",
+      "credentials": {
+        "airtableOAuth2Api": {
+          "id": "43DLhjkp9uNMf9CX",
+          "name": "Duncan's Airtable"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=article summary: {{ $('getSource1').item.json.sourceSummary }}\n\nDo not output any double or single quotes or special characters. ",
+        "options": {
+          "systemMessage": "=You are an AI generating vivid image prompts for a specific article based on its summary. Do not output any special characters (quotes, dashes, emdashes, colons, etc.)\n\nExamples:\nFor Conceptual (Soft Minimalist Illustration):\n\n'Simple silhouette of person stretching toward sun, muted earth tones with clean lines, minimalist landscape with gentle gradient sky'\n\nFor Human (Lifestyle Photography with Natural Light):\n\n'Woman reading in window nook surrounded by plants, golden hour sunlight creating warm glow, cozy textiles with natural wood elements'\n\nFor Strategic (Editorial Flat Lay or Still Life):\n\n'Organized workstation from above, artfully arranged notebook and coffee cup, natural oak surface with intentional negative space'\n\nFor Symbolic (Illustrated Linework with Accent Colors):\n\n'Confident black line drawing of path winding through mountains, single red accent highlighting destination, balanced white space'\n\nFor Reflective (Muted Collage Aesthetic):\n\n'Layered memory collage with vintage photographs and torn paper textures, warm sepia tones, handwritten notes peeking through edges'\n\nExtract the core theme from keywords, maintain visual clarity, and create a scene with visual interest.\nOutput one concise but evocative prompt sentence (25-35 words).\n\nCONSTRAINTS:\n- Make sure to include the specific image style at the start of the prompt (ie. editorial flat lay,Soft Minimalist Illustration,etc.)\n- Avoid anything that would involve text, signs, or written elements\n- Focus on scenes that would translate well visually\n- Include lighting, mood, or atmosphere elements\n- Here is a style guide : {{ $('getStyle').item.json.styleGuide }}\n- Note: any objects mentioned in the style guide are only for your reference. Subjects and objects included in your prompts should be relevant to the article."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1.8,
+      "position": [
+        -3740,
+        1660
+      ],
+      "id": "20b32478-d3ec-4e69-a5c9-3bc80d06fd9b",
+      "name": "Image Prompts1"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-4o-mini"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        -3680,
+        1900
+      ],
+      "id": "a8bf59a3-08c6-4fc2-9587-185592195470",
+      "name": "4o-mini1",
+      "credentials": {
+        "openAiApi": {
+          "id": "T48ghmUDQ7z0HSKB",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-4o-mini"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        -4260,
+        1880
+      ],
+      "id": "7a1920a2-ca58-4a97-be3d-807a3e02f42b",
+      "name": "OpenAI Chat Model6",
+      "credentials": {
+        "openAiApi": {
+          "id": "T48ghmUDQ7z0HSKB",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Here's the article summaryfor context: \n\n {{ $('getSource1').item.json.sourceSummary }}",
+        "hasOutputParser": true,
+        "messages": {
+          "messageValues": [
+            {
+              "message": "=You are a helpful and intelligent content analyzer. Your task is to identify the main theme of a given article. Your only choices are:\n\n1. conceptual (flexibility, belonging, remote work, comfort design, sense of place)\n\n2. human (guest stories, daily routines, remote work life, hospitality moments, authentic connection)\n\n3. strategic (investor insights, property optimization, business growth, hospitality trends, workspace design)\n\n4. symbolic (brand values, transformation, emotional safety, community, trust-building)\n\n5. reflective (personal essays, belonging, life transitions, philosophy of home, servant leadership)\n\nYou must output only 1 word in the following JSON format: \n\n{\"contentType\":\"the main theme or style the article\"}\n\n"
+            }
+          ]
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.6,
+      "position": [
+        -4240,
+        1660
+      ],
+      "id": "d4333459-a228-46bb-b5d2-02c4ca61d35d",
+      "name": "Identify Topic1"
+    },
+    {
+      "parameters": {
+        "jsonSchemaExample": "{\n\t\"content type\": \"the topic\"\n}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.2,
+      "position": [
+        -4060,
+        1880
+      ],
+      "id": "819ad52a-54ac-4aec-9258-4783261caab8",
+      "name": "Structured Output Parser3"
+    },
+    {
+      "parameters": {
+        "jsCode": "function getRandomInt1To4() {\n  return Math.floor(Math.random() * 4) + 1;\n}\n\n// Generate the random number\nconst randomNumber = getRandomInt1To4();\n\n// Define the four writing frameworks\nconst frameworks = {\n  1: `You are an expert at LinkedIn and skilled in crafting impactful copy using the Problem-Agitate-Solve (PAS) framework.\n\nPurpose: Create a compelling LinkedIn post on a given topic that generates high engagement—likes, comments, and shares—by adhering to the PAS formula and the guidelines below.\n\nTask: Write a publish-ready social media post that is engaging, informative, and encourages interaction.\n\nContent Structure (PAS Framework):\n\nProblem:\n- Start with a strong, attention-grabbing conviction statement that identifies a relevant issue or lesson.\n- Use short sentences to express personal realizations or challenges.\n\nAgitate:\n- Elaborate on the consequences or negative outcomes associated with the problem.\n- Incorporate a dash list to highlight specific experiences, challenges, or mistakes.\n- Keep points concise, starting with impactful words or phrases.\n\nSolve:\n- Share the realization or solution you discovered.\n- Use another dash list if appropriate to highlight positive changes or benefits.\n- Include short, motivational sentences to inspire the reader.\n\nFormatting:\n- Length: Limit the post to a maximum of 150 words.\n- Paragraphs: Use short paragraphs and single sentences to create a rhythmic flow.\n- Lists: Incorporate dash lists to emphasize key points.\n- Opening: Begin with a strong, impactful statement to engage readers immediately.\n- Closing: End with a brief, insightful conclusion or reflective statement. Do not ask questions or tell readers what to do.\n\nDo Not Include:\n- Emojis, hashtags, or labels.\n- Cheesy phrases or clichés.\n- Overused idioms or slang.\n- Numbered lists (use dash lists instead).\n- Semicolons.\n- Markdown formatting (no asterisks for bold/italic, no backticks for code).\n- Questions directed at the reader.\n- Calls-to-action or instructions telling readers what to do.\n- Phrases like \"Let's explore\", \"What do you think?\", or \"Let me know in the comments\".`,\n\n  2: `You are an expert at LinkedIn and skilled in crafting impactful copy using the Insight-Impact-Recommendation framework.\n\nPurpose: Create a compelling LinkedIn post on a given topic that generates high engagement—likes, comments, and shares—by adhering to the Insight-Impact-Recommendation formula and the guidelines below.\n\nTask: Write a publish-ready social media post that is engaging, informative, and encourages interaction.\n\nContent Structure (Insight-Impact-Recommendation Framework):\n\nInsight: \n- Start with a strong, attention-grabbing statement that shares a key insight or observation relevant to your industry.\n- Use short sentences to introduce the insight.\n\nImpact: \n- Elaborate on the implications or effects of this insight on the industry or professionals.\n- Incorporate a dash list to highlight specific impacts or consequences.\n- Keep points concise, starting with impactful words or phrases.\n\nRecommendation:\n- Offer actionable advice or steps that the reader can take based on the insight.\n- Use another dash list if appropriate to outline recommendations.\n- Include short, motivational sentences to inspire the reader.\n\nFormatting:\nLength: Limit the post to a maximum of 150 words.\nParagraphs: Use short paragraphs and single sentences to create a rhythmic flow.\nBullet Points: Incorporate bullet-point lists to emphasize key points.\nOpening: Begin with a strong, impactful statement to engage readers immediately.\nClosing: End with an encouraging thought.\n\nDo Not Include:\nEmojis, hashtags, or labels.\nCheesy phrases or clichés.\nOverused idioms or slang.\nNumbered lists (use bullet points instead).\nSemicolons.`,\n\n  3: `You are an expert at LinkedIn and skilled in crafting impactful copy using the Story-Insight-Action framework.\n\nPurpose: Create a compelling LinkedIn post on a given topic that generates high engagement—likes, comments, and shares—by adhering to the Story-Insight-Action formula and the guidelines below.\n\nTask: Write a publish-ready social media post that is engaging, informative, and encourages interaction.\n\nContent Structure (Story-Insight-Action Framework):\n\nStory:\n- Start with a compelling personal story or anecdote that is relevant to your industry or professional journey.\n- Use vivid language to draw the reader in.\n\nInsight:\n- Share the key lesson or insight gained from the experience.\n- Use short sentences to highlight the significance.\n\nAction:\n- Provide actionable advice or steps relevant to the insight.\n- Incorporate a dash list to outline specific actions.\n- Include brief, motivational statements to conclude.\n\nFormatting:\nLength: Limit the post to a maximum of 150 words.\nParagraphs: Use short paragraphs and single sentences to create a rhythmic flow.\nBullet Points: Use bullet-point lists to emphasize key points.\nOpening: Begin with an engaging narrative to capture the reader's attention.\nClosing: End with an encouraging thought.\n\nDo Not Include:\nEmojis, hashtags, or labels.\nCheesy phrases or clichés.\nOverused idioms or slang.\nNumbered lists (use bullet points instead).\nSemicolons.`,\n\n  4: `You are an expert at LinkedIn and skilled in crafting impactful copy using the What? So What? Now What? framework.\n\nPurpose: Create a compelling LinkedIn post on a given topic that generates high engagement—likes, comments, and shares—by adhering to the What? So What? Now What? formula and the guidelines below.\n\nTask: Write a publish-ready social media post that is engaging, informative, and encourages interaction.\n\nContent Structure (What? So What? Now What? Framework):\n\nWhat?: \n- Present a fact, event, or observation relevant to your industry.\n- Use a strong opening sentence to grab attention.\n\nSo What?: \n- Explain the significance or implications of this information.\n- Incorporate a dash list to highlight specific impacts or consequences.\n- Keep points concise and impactful.\n\nNow What?: \n- Offer actionable advice or a forward-looking perspective.\n- Use short sentences to motivate the reader to consider next steps.\n\nFormatting:\nLength: Limit the post to a maximum of 150 words.\nParagraphs: Use short paragraphs and single sentences to create a rhythmic flow.\nBullet Points: Use bullet-point lists to emphasize key points.\nOpening: Begin with a strong, attention-grabbing statement.\nClosing: End with an encouraging thought.\n\nDo Not Include:\nEmojis, hashtags, or labels.\nCheesy phrases or clichés.\nOverused idioms or slang.\nNumbered lists (use bullet points instead).\nSemicolons.`\n};\n\n// Select the framework based on the random number\nconst selectedFramework = frameworks[randomNumber];\n\n// Define framework names\nconst frameworkNames = {\n  1: \"Problem-Agitate-Solve\",\n  2: \"Insight-Impact-Recommendation\",\n  3: \"Story-Insight-Action\",\n  4: \"What?-So What?-Now What?\"\n};\n\n// Return the random number and the corresponding framework\nreturn [\n  {\n    randomNumber: randomNumber,\n    frameworkName: frameworkNames[randomNumber],\n    framework: selectedFramework\n  }\n];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -5220,
+        1900
+      ],
+      "id": "4693a767-8bd3-42f2-82a7-0fdd62beebcb",
+      "name": "getFramework"
+    },
+    {
+      "parameters": {
+        "authentication": "airtableOAuth2Api",
+        "operation": "update",
+        "base": {
+          "__rl": true,
+          "value": "appQ4oga8PGMIYQeH",
+          "mode": "list",
+          "cachedResultName": "n8n - Social Content - YT",
+          "cachedResultUrl": "https://airtable.com/appQ4oga8PGMIYQeH"
+        },
+        "table": {
+          "__rl": true,
+          "value": "tblZwA0JCNPeORaGi",
+          "mode": "list",
+          "cachedResultName": "Social Posts",
+          "cachedResultUrl": "https://airtable.com/appC2QdqKVgYuAjKt/tblZwA0JCNPeORaGi"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "id": "={{ $('getSource1').item.json.id }}",
+            "linkedinCopy": "={{ $('LinkedIn Writer').item.json.text }}",
+            "Status": "Needs Approval",
+            "datePosted": "=",
+            "imagePrompt": "={{ $('Generate Image').item.json.revised_prompt }}",
+            "postImage": "={{ [{\"url\": $('Download Image1').item.json.url}] }}"
+          },
+          "matchingColumns": [
+            "id"
+          ],
+          "schema": [
+            {
+              "id": "id",
+              "displayName": "id",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": false
+            },
+            {
+              "id": "sourceHeadline",
+              "displayName": "sourceHeadline",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "sourceSummary",
+              "displayName": "sourceSummary",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "goToArticle",
+              "displayName": "goToArticle",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "socialChannels",
+              "displayName": "socialChannels",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "array",
+              "options": [
+                {
+                  "name": "LinkedIn",
+                  "value": "LinkedIn"
+                },
+                {
+                  "name": "Blog",
+                  "value": "Blog"
+                }
+              ],
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "needsImage?",
+              "displayName": "needsImage?",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "options",
+              "options": [
+                {
+                  "name": "Yes",
+                  "value": "Yes"
+                },
+                {
+                  "name": "No",
+                  "value": "No"
+                }
+              ],
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "linkedinCopy",
+              "displayName": "linkedinCopy",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "blogCopy",
+              "displayName": "blogCopy",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "imagePrompt",
+              "displayName": "imagePrompt",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "postImage",
+              "displayName": "postImage",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "array",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Status",
+              "displayName": "Status",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "options",
+              "options": [
+                {
+                  "name": "Waiting for Content",
+                  "value": "Waiting for Content"
+                },
+                {
+                  "name": "Needs Approval",
+                  "value": "Needs Approval"
+                },
+                {
+                  "name": "Approved",
+                  "value": "Approved"
+                },
+                {
+                  "name": "Posted",
+                  "value": "Posted"
+                }
+              ],
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "datePosted",
+              "displayName": "datePosted",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "ID",
+              "displayName": "ID",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "sourceURL",
+              "displayName": "sourceURL",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2.1,
+      "position": [
+        -2920,
+        1660
+      ],
+      "id": "fb393a66-8b18-4e60-a066-a60d649ff148",
+      "name": "Airtable3",
+      "credentials": {
+        "airtableOAuth2Api": {
+          "id": "43DLhjkp9uNMf9CX",
+          "name": "Duncan's Airtable"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "## LinkedIn Writer",
+        "height": 80,
+        "color": 5
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -6840,
+        1920
+      ],
+      "id": "30490ea3-0063-4627-bcc7-c1e2947f6151",
+      "name": "Sticky Note2"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Please craft a LinkedIn post based on the follow news story and additional research.\n\nFocus on the Article Headline and Summary -\nArticle Headline: {{ $('getSource1').item.json.sourceHeadline }}\nArticle Summary: {{ $('getSource1').item.json.sourceSummary }}\n\nAdditional Research (use if compelling):{{ $('Researcher1').item.json.output }}",
+        "messages": {
+          "messageValues": [
+            {
+              "message": "={{ $('getFramework').item.json.framework }}\nNever include asterisks or markdown formatting"
+            },
+            {
+              "type": "HumanMessagePromptTemplate",
+              "message": "=Be casual, spartan, and use normal language.\n\nPlease follow these tone of voice guidelines: {{ $json.Guidelines }}"
+            }
+          ]
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.6,
+      "position": [
+        -4840,
+        1900
+      ],
+      "id": "b7b8d727-0432-48b1-91d8-61ffe98e18d5",
+      "name": "LinkedIn Writer"
+    },
+    {
+      "parameters": {
+        "resource": "image",
+        "prompt": "={{ $json.output }}",
+        "options": {
+          "returnImageUrls": true
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 1.8,
+      "position": [
+        -3420,
+        1660
+      ],
+      "id": "8580e218-3a52-4537-b80c-8d8a7b96538a",
+      "name": "Generate Image",
+      "credentials": {
+        "openAiApi": {
+          "id": "T48ghmUDQ7z0HSKB",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "={{ $json.url }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -3080,
+        1660
+      ],
+      "id": "e6643ce0-3ac9-432e-93fc-f404eb4c5d38",
+      "name": "Download Image1"
+    },
+    {
+      "parameters": {
+        "authentication": "airtableOAuth2Api",
+        "operation": "update",
+        "base": {
+          "__rl": true,
+          "value": "appC2QdqKVgYuAjKt",
+          "mode": "list",
+          "cachedResultName": "Social Hub - Andrew LeBaron",
+          "cachedResultUrl": "https://airtable.com/appC2QdqKVgYuAjKt"
+        },
+        "table": {
+          "__rl": true,
+          "value": "tblZwA0JCNPeORaGi",
+          "mode": "list",
+          "cachedResultName": "Social Posts",
+          "cachedResultUrl": "https://airtable.com/appC2QdqKVgYuAjKt/tblZwA0JCNPeORaGi"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "id": "={{ $('getSource2').item.json.id }}",
+            "linkedinCopy": "=",
+            "Status": "Posted",
+            "datePosted": "={{ $now.format(\"yyyy-MM-dd\") }}"
+          },
+          "matchingColumns": [
+            "id"
+          ],
+          "schema": [
+            {
+              "id": "id",
+              "displayName": "id",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": false
+            },
+            {
+              "id": "sourceHeadline",
+              "displayName": "sourceHeadline",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "sourceSummary",
+              "displayName": "sourceSummary",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "goToArticle",
+              "displayName": "goToArticle",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "socialChannels",
+              "displayName": "socialChannels",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "array",
+              "options": [
+                {
+                  "name": "LinkedIn",
+                  "value": "LinkedIn"
+                },
+                {
+                  "name": "Blog",
+                  "value": "Blog"
+                }
+              ],
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "needsImage?",
+              "displayName": "needsImage?",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "options",
+              "options": [
+                {
+                  "name": "Yes",
+                  "value": "Yes"
+                },
+                {
+                  "name": "No",
+                  "value": "No"
+                }
+              ],
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "linkedinCopy",
+              "displayName": "linkedinCopy",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "blogCopy",
+              "displayName": "blogCopy",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "imagePrompt",
+              "displayName": "imagePrompt",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "postImage",
+              "displayName": "postImage",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "array",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Status",
+              "displayName": "Status",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "options",
+              "options": [
+                {
+                  "name": "Waiting for Content",
+                  "value": "Waiting for Content"
+                },
+                {
+                  "name": "Needs Approval",
+                  "value": "Needs Approval"
+                },
+                {
+                  "name": "Approved",
+                  "value": "Approved"
+                },
+                {
+                  "name": "Posted",
+                  "value": "Posted"
+                }
+              ],
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "datePosted",
+              "displayName": "datePosted",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "ID",
+              "displayName": "ID",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "sourceURL",
+              "displayName": "sourceURL",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2.1,
+      "position": [
+        -5600,
+        3000
+      ],
+      "id": "544312e6-a104-45c6-9c1f-e9f3dbb419a2",
+      "name": "Airtable",
+      "credentials": {
+        "airtableOAuth2Api": {
+          "id": "J1csfpab990T0hFg",
+          "name": "Airtable Personal Access Token account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "person": "n7y5e0Owd1",
+        "text": "={{ $('getSource2').item.json.linkedinCopy }}",
+        "shareMediaCategory": "IMAGE",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.linkedIn",
+      "typeVersion": 1,
+      "position": [
+        -5580,
+        2780
+      ],
+      "id": "700c19d9-f2f5-4466-8450-1398b0bad960",
+      "name": "LinkedIn Image",
+      "credentials": {
+        "linkedInOAuth2Api": {
+          "id": "ziUDpU6kpAorzvPA",
+          "name": "Duncan's LinkedIn"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "person": "n7y5e0Owd1",
+        "text": "={{ $('getSource2').item.json.linkedinCopy }}",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.linkedIn",
+      "typeVersion": 1,
+      "position": [
+        -5820,
+        3000
+      ],
+      "id": "c731b297-a432-4eb9-9d56-f493b66141a0",
+      "name": "LinkedIn Text",
+      "credentials": {
+        "linkedInOAuth2Api": {
+          "id": "ziUDpU6kpAorzvPA",
+          "name": "Duncan's LinkedIn"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 45 7 * * 1,3,4"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -6480,
+        2880
+      ],
+      "id": "4740afa5-d07a-40e8-8dde-04e36176c630",
+      "name": "Schedule Trigger"
+    },
+    {
+      "parameters": {
+        "authentication": "airtableOAuth2Api",
+        "operation": "search",
+        "base": {
+          "__rl": true,
+          "value": "appQ4oga8PGMIYQeH",
+          "mode": "list",
+          "cachedResultName": "n8n - Social Content - YT",
+          "cachedResultUrl": "https://airtable.com/appQ4oga8PGMIYQeH"
+        },
+        "table": {
+          "__rl": true,
+          "value": "tblZwA0JCNPeORaGi",
+          "mode": "list",
+          "cachedResultName": "Social Posts",
+          "cachedResultUrl": "https://airtable.com/appQ4oga8PGMIYQeH/tblZwA0JCNPeORaGi"
+        },
+        "filterByFormula": "AND({Status}=\"Approved\", FIND(\"LinkedIn\", {socialChannels}))",
+        "returnAll": false,
+        "limit": 1,
+        "options": {},
+        "sort": {
+          "property": [
+            {
+              "field": "sourceSummary"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2.1,
+      "position": [
+        -6260,
+        2880
+      ],
+      "id": "5f158208-f435-44ab-972d-667ccfb2c9a8",
+      "name": "getSource2",
+      "credentials": {
+        "airtableOAuth2Api": {
+          "id": "43DLhjkp9uNMf9CX",
+          "name": "Duncan's Airtable"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "381b17c9-7cbe-430d-b0af-db0a84aa613f",
+              "leftValue": "={{ $('getSource2').item.json['needsImage?'] }}",
+              "rightValue": "Yes",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -6060,
+        2880
+      ],
+      "id": "fa64ae31-a16c-43f1-8077-cbb595729ea2",
+      "name": "If1"
+    },
+    {
+      "parameters": {
+        "url": "={{ $json.postImage[0].url }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -5800,
+        2780
+      ],
+      "id": "72f5e5dc-c85c-4359-84fe-b1fb1d37be28",
+      "name": "getImage"
+    },
+    {
+      "parameters": {
+        "authentication": "airtableOAuth2Api",
+        "operation": "update",
+        "base": {
+          "__rl": true,
+          "value": "appQ4oga8PGMIYQeH",
+          "mode": "list",
+          "cachedResultName": "n8n - Social Content - YT",
+          "cachedResultUrl": "https://airtable.com/appQ4oga8PGMIYQeH"
+        },
+        "table": {
+          "__rl": true,
+          "value": "tblZwA0JCNPeORaGi",
+          "mode": "list",
+          "cachedResultName": "Social Posts",
+          "cachedResultUrl": "https://airtable.com/appC2QdqKVgYuAjKt/tblZwA0JCNPeORaGi"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "id": "={{ $('getSource2').item.json.id }}",
+            "linkedinCopy": "=",
+            "Status": "Posted",
+            "datePosted": "={{ $now.format(\"yyyy-MM-dd\") }}"
+          },
+          "matchingColumns": [
+            "id"
+          ],
+          "schema": [
+            {
+              "id": "id",
+              "displayName": "id",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": false
+            },
+            {
+              "id": "sourceHeadline",
+              "displayName": "sourceHeadline",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "sourceSummary",
+              "displayName": "sourceSummary",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "goToArticle",
+              "displayName": "goToArticle",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "socialChannels",
+              "displayName": "socialChannels",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "array",
+              "options": [
+                {
+                  "name": "LinkedIn",
+                  "value": "LinkedIn"
+                },
+                {
+                  "name": "Blog",
+                  "value": "Blog"
+                }
+              ],
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "needsImage?",
+              "displayName": "needsImage?",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "options",
+              "options": [
+                {
+                  "name": "Yes",
+                  "value": "Yes"
+                },
+                {
+                  "name": "No",
+                  "value": "No"
+                }
+              ],
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "linkedinCopy",
+              "displayName": "linkedinCopy",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "blogCopy",
+              "displayName": "blogCopy",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "imagePrompt",
+              "displayName": "imagePrompt",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "postImage",
+              "displayName": "postImage",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "array",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Status",
+              "displayName": "Status",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "options",
+              "options": [
+                {
+                  "name": "Waiting for Content",
+                  "value": "Waiting for Content"
+                },
+                {
+                  "name": "Needs Approval",
+                  "value": "Needs Approval"
+                },
+                {
+                  "name": "Approved",
+                  "value": "Approved"
+                },
+                {
+                  "name": "Posted",
+                  "value": "Posted"
+                }
+              ],
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "datePosted",
+              "displayName": "datePosted",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "ID",
+              "displayName": "ID",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "sourceURL",
+              "displayName": "sourceURL",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2.1,
+      "position": [
+        -5360,
+        2780
+      ],
+      "id": "8e2c4500-3b0a-4707-b48b-8a5e150180d8",
+      "name": "Airtable4",
+      "credentials": {
+        "airtableOAuth2Api": {
+          "id": "43DLhjkp9uNMf9CX",
+          "name": "Duncan's Airtable"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "## Post to LinkedIn",
+        "height": 80,
+        "color": 6
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -6840,
+        2880
+      ],
+      "id": "e3c5b84a-fe23-4b96-8086-9e6fb198c992",
+      "name": "Sticky Note6"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        -3240,
+        1660
+      ],
+      "id": "15872dc3-157f-4530-b59b-9e0e944db8fe",
+      "name": "Wait1",
+      "webhookId": "36c8b3a4-429f-4062-b948-941e3c203a03"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        -6140,
+        1900
+      ],
+      "id": "a091baa0-7b97-40cc-9b0a-8ecd6d7a2f55",
+      "name": "Loop Over Items"
+    },
+    {
+      "parameters": {
+        "jsCode": "return[\n  { \"json\": { \"feed\": \"https://knowtechie.com/category/ai/feed/\" } },\n  { \"json\": { \"feed\": \"https://aibusiness.com/rss.xml\" } },\n  { \"json\": { \"feed\": \"https://futurism.com/categories/ai-artificial-intelligence/feed\" } }\n]"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -5880,
+        900
+      ],
+      "id": "91e1c514-4389-4260-8d2a-d0212efdc8fe",
+      "name": "RSS Feeds"
+    },
+    {
+      "parameters": {
+        "url": "={{ $json.feed }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.rssFeedRead",
+      "typeVersion": 1.1,
+      "position": [
+        -5520,
+        1000
+      ],
+      "id": "f6a34d54-c053-4979-802e-2567a713b6cf",
+      "name": "RSS Read"
+    },
+    {
+      "parameters": {
+        "maxItems": 6
+      },
+      "type": "n8n-nodes-base.limit",
+      "typeVersion": 1,
+      "position": [
+        -5360,
+        760
+      ],
+      "id": "cb7493b0-3857-45fd-8a1a-8f66bf39bbe6",
+      "name": "Limit"
+    },
+    {
+      "parameters": {
+        "url": "={{ $('If2').item.json.link }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -5040,
+        760
+      ],
+      "id": "3df373ee-a231-43ec-96d2-3279439e64cd",
+      "name": "getContent"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-4o-mini"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        -4520,
+        920
+      ],
+      "id": "e6c4c8fb-ea4a-49c3-a738-edaa2dcc3d63",
+      "name": "OpenAI Chat Model1",
+      "credentials": {
+        "openAiApi": {
+          "id": "T48ghmUDQ7z0HSKB",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "html": "={{ $json.data }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.markdown",
+      "typeVersion": 1,
+      "position": [
+        -4880,
+        760
+      ],
+      "id": "0b148a39-13f0-4cd1-81bb-98b749bc88d6",
+      "name": "Markdown"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.data }}",
+        "messages": {
+          "messageValues": [
+            {
+              "message": "=You are a helpful, intelligent summarizer assistant. Your task is to identify the  main body text of the article and create a detailed summary of its contents. Identify any key subjects or themes and the main topic of the article.\n\nSummaries should be no more than 1000 characters. do not include any extra words or phrases like \"summary of article\" or \"the article discusses\""
+            }
+          ]
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.5,
+      "position": [
+        -4560,
+        760
+      ],
+      "id": "02028cf1-1b7c-4611-80a1-48aba1fb15c7",
+      "name": "summarizeArticles"
+    },
+    {
+      "parameters": {
+        "authentication": "airtableOAuth2Api",
+        "operation": "search",
+        "base": {
+          "__rl": true,
+          "value": "appQ4oga8PGMIYQeH",
+          "mode": "list",
+          "cachedResultName": "n8n - Social Content - YT",
+          "cachedResultUrl": "https://airtable.com/appQ4oga8PGMIYQeH"
+        },
+        "table": {
+          "__rl": true,
+          "value": "tblZwA0JCNPeORaGi",
+          "mode": "list",
+          "cachedResultName": "Social Posts",
+          "cachedResultUrl": "https://airtable.com/appC2QdqKVgYuAjKt/tblZwA0JCNPeORaGi"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2.1,
+      "position": [
+        -6340,
+        900
+      ],
+      "id": "eab023a1-df60-4945-b007-031413bc42ea",
+      "name": "getURLs",
+      "alwaysOutputData": true,
+      "credentials": {
+        "airtableOAuth2Api": {
+          "id": "43DLhjkp9uNMf9CX",
+          "name": "Duncan's Airtable"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "sourceURL",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [
+        -6200,
+        900
+      ],
+      "id": "7454ae06-1092-410f-a1d0-618bdc91236f",
+      "name": "Split Out",
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "fieldsToAggregate": {
+          "fieldToAggregate": [
+            {
+              "fieldToAggregate": "sourceURL"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.aggregate",
+      "typeVersion": 1,
+      "position": [
+        -6060,
+        900
+      ],
+      "id": "d00aa65a-3d7b-4bd9-bd2f-aad3eff74320",
+      "name": "Aggregate",
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "b1c86333-3750-47bc-aa01-0c426dab8c8f",
+              "leftValue": "={{ $('Aggregate').item.json.sourceURL.toString() }}",
+              "rightValue": "={{ $json.link }}",
+              "operator": {
+                "type": "string",
+                "operation": "notContains"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.filter",
+      "typeVersion": 2.2,
+      "position": [
+        -5200,
+        760
+      ],
+      "id": "57def664-5bbd-40d2-a500-469e65f21158",
+      "name": "Filter"
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {}
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -6480,
+        900
+      ],
+      "id": "a64532a7-0b36-4ba5-ab13-660952b23b15",
+      "name": "Schedule Trigger1"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        -5740,
+        900
+      ],
+      "id": "2d0027ef-35d0-4508-ad3f-d1609a73f2cc",
+      "name": "Loop Over Items1"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "aabfdeff-d854-4ea8-9446-a77fae3c589e",
+              "leftValue": "={{ $('RSS Read').first().json.pubDate }}",
+              "rightValue": "={{ DateTime.now().minus({ days: 3 }) }}",
+              "operator": {
+                "type": "dateTime",
+                "operation": "afterOrEquals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -5560,
+        800
+      ],
+      "id": "932dedbd-d223-47e9-9787-326ba8ea77c5",
+      "name": "If2"
+    },
+    {
+      "parameters": {
+        "content": "## INPUT: RSS Feed",
+        "height": 80,
+        "color": 6
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -6860,
+        900
+      ],
+      "id": "73854df7-dc82-4125-84c4-620b4d618946",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "authentication": "airtableOAuth2Api",
+        "operation": "create",
+        "base": {
+          "__rl": true,
+          "value": "appQ4oga8PGMIYQeH",
+          "mode": "list",
+          "cachedResultName": "n8n - Social Content - YT",
+          "cachedResultUrl": "https://airtable.com/appQ4oga8PGMIYQeH"
+        },
+        "table": {
+          "__rl": true,
+          "value": "tblZwA0JCNPeORaGi",
+          "mode": "list",
+          "cachedResultName": "Social Posts",
+          "cachedResultUrl": "https://airtable.com/appQ4oga8PGMIYQeH/tblZwA0JCNPeORaGi"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "sourceHeadline": "={{ $json.sourceHeadline }}",
+            "sourceSummary": "={{ $json.sourceSummary }}",
+            "sourceURL": "={{ $json.sourceURL }}",
+            "Status": "Waiting for Content"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "sourceHeadline",
+              "displayName": "sourceHeadline",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "sourceSummary",
+              "displayName": "sourceSummary",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "goToArticle",
+              "displayName": "goToArticle",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "sourceURL",
+              "displayName": "sourceURL",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "socialChannels",
+              "displayName": "socialChannels",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "array",
+              "options": [
+                {
+                  "name": "Twitter",
+                  "value": "Twitter"
+                },
+                {
+                  "name": "LinkedIn",
+                  "value": "LinkedIn"
+                },
+                {
+                  "name": "Blog",
+                  "value": "Blog"
+                },
+                {
+                  "name": "Instagram",
+                  "value": "Instagram"
+                },
+                {
+                  "name": "Facebook",
+                  "value": "Facebook"
+                }
+              ],
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "needsImage?",
+              "displayName": "needsImage?",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "options",
+              "options": [
+                {
+                  "name": "Yes",
+                  "value": "Yes"
+                },
+                {
+                  "name": "No",
+                  "value": "No"
+                }
+              ],
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "twitterCopy",
+              "displayName": "twitterCopy",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "linkedinCopy",
+              "displayName": "linkedinCopy",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "blogCopy",
+              "displayName": "blogCopy",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "imagePrompt",
+              "displayName": "imagePrompt",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "postImage",
+              "displayName": "postImage",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "array",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Status",
+              "displayName": "Status",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "options",
+              "options": [
+                {
+                  "name": "Waiting for Content",
+                  "value": "Waiting for Content"
+                },
+                {
+                  "name": "Needs Approval",
+                  "value": "Needs Approval"
+                },
+                {
+                  "name": "Approved",
+                  "value": "Approved"
+                },
+                {
+                  "name": "Posted",
+                  "value": "Posted"
+                }
+              ],
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "datePosted",
+              "displayName": "datePosted",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "ID",
+              "displayName": "ID",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2.1,
+      "position": [
+        -4100,
+        760
+      ],
+      "id": "3b6e3599-f63e-418f-bbbe-8ea1e09b3bd6",
+      "name": "Airtable2",
+      "credentials": {
+        "airtableOAuth2Api": {
+          "id": "43DLhjkp9uNMf9CX",
+          "name": "Duncan's Airtable"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "## Get Existing Records",
+        "height": 300,
+        "width": 620,
+        "color": 3
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -6560,
+        820
+      ],
+      "id": "282d6f2c-8651-41b2-b575-446bd1583eea",
+      "name": "Sticky Note1"
+    },
+    {
+      "parameters": {
+        "content": "## Get RSS Feeds",
+        "height": 520,
+        "width": 820
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -5900,
+        700
+      ],
+      "id": "7c5ee978-6a35-4b4a-bc03-ed59a06164db",
+      "name": "Sticky Note3"
+    },
+    {
+      "parameters": {
+        "content": "## Reformat",
+        "height": 280,
+        "width": 480
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -5060,
+        700
+      ],
+      "id": "e8762664-4288-491a-9cda-1ab3d96deae9",
+      "name": "Sticky Note4"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Function to extract article content from markdown\nfunction extractArticleFromMarkdown(markdown) {\n  if (!markdown) return { title: '', content: '' };\n  \n  // Find where the first heading starts (# Title)\n  const headingIndex = markdown.indexOf('# ');\n  \n  // If no heading found, return empty\n  if (headingIndex === -1) {\n    return { title: '', content: '' };\n  }\n  \n  // Get everything from the heading onwards\n  const contentFromHeading = markdown.substring(headingIndex);\n  \n  // Extract the title (first line starting with #)\n  let title = '';\n  const titleMatch = contentFromHeading.match(/^#\\s+(.*?)$/m);\n  if (titleMatch) {\n    title = titleMatch[1].trim();\n  }\n  \n  // Remove all content inside brackets and parentheses\n  let cleanedMarkdown = contentFromHeading\n    // Remove content inside square brackets [...]\n    .replace(/\\[[^\\]]*\\]/g, '')\n    \n    // Remove content inside parentheses (...)\n    .replace(/\\([^)]*\\)/g, '')\n    \n    // Remove image markdown patterns\n    .replace(/!\\[[^\\]]*\\]\\([^)]*\\)/g, '')\n    \n    // Remove strange tags like !tag!\n    .replace(/!\\w+!/g, '');\n  \n  // Split into lines to do additional cleanup\n  const lines = cleanedMarkdown.split('\\n');\n  \n  // Filter out unwanted lines\n  const filteredLines = lines.filter(line => {\n    // Skip empty or very short lines\n    if (line.trim().length < 5) return false;\n    \n    // Skip lines with obvious metadata/navigation\n    if (line.includes('min read') || \n        line.includes('hours ago') || \n        line.includes('Trending') ||\n        line.includes('Explore') ||\n        line.includes('Company') ||\n        line.includes('Social') ||\n        line.includes('Important') ||\n        line.includes('View all') ||\n        line.includes('Facebook') ||\n        line.includes('Twitter') ||\n        line.includes('LinkedIn') ||\n        line.includes('Reddit') ||\n        line.includes('Share') ||\n        line.includes('IabAdad')) return false;\n    \n    return true;\n  });\n  \n  // Join the filtered lines\n  let content = filteredLines.join('\\n');\n  \n  return {\n    title: title,\n    content: content\n  };\n}\n\n// Create an array to hold the processed items\nconst processedItems = [];\n\n// Check if the input is an array\nif (Array.isArray($input.all())) {\n  // Process each item in the array\n  $input.all().forEach(item => {\n    const markdownContent = item.json.document_content || item.json.data;\n    if (!markdownContent) return;\n    \n    const extracted = extractArticleFromMarkdown(markdownContent);\n    \n    processedItems.push({\n      json: {\n        ...item.json,\n        title: extracted.title,\n        content: extracted.content\n      }\n    });\n  });\n  \n  // Return the array of processed items\n  return processedItems;\n} else {\n  // Process a single item\n  const markdownContent = $input.item.json.document_content || $input.item.json.data;\n  const extracted = extractArticleFromMarkdown(markdownContent);\n  \n  // Return the single processed item\n  return {\n    json: {\n      ...$input.item.json,\n      title: extracted.title,\n      content: extracted.content\n    }\n  };\n}"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -4720,
+        760
+      ],
+      "id": "6a1456ca-7a5f-4921-bb72-c06a1841ea74",
+      "name": "cleanup"
+    },
+    {
+      "parameters": {
+        "content": "## Summarize + Save",
+        "height": 320,
+        "width": 660,
+        "color": 4
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -4560,
+        700
+      ],
+      "id": "8ed8bb50-a4be-4cf7-bd49-2afc1e3d552b",
+      "name": "Sticky Note5"
+    },
+    {
+      "parameters": {
+        "content": "## Get Content",
+        "height": 260,
+        "width": 620
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -6540,
+        2800
+      ],
+      "id": "daa62298-759e-409d-87c3-4c5636373a79",
+      "name": "Sticky Note7"
+    },
+    {
+      "parameters": {
+        "content": "## Post/Publish",
+        "height": 520,
+        "width": 700,
+        "color": 4
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -5840,
+        2700
+      ],
+      "id": "a9c8a268-334f-4414-97d2-a03522ba21f4",
+      "name": "Sticky Note8"
+    },
+    {
+      "parameters": {
+        "content": "## Get Sources",
+        "height": 600,
+        "width": 340
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -6340,
+        1580
+      ],
+      "id": "69c1dac2-6153-4f59-970e-aba4b3a55302",
+      "name": "Sticky Note9"
+    },
+    {
+      "parameters": {
+        "content": "## Research",
+        "height": 680,
+        "width": 680
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -5920,
+        1580
+      ],
+      "id": "9ae14957-06b7-4c10-9511-a67b36244e30",
+      "name": "Sticky Note10"
+    },
+    {
+      "parameters": {
+        "content": "## Write",
+        "height": 680,
+        "width": 340
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -4880,
+        1580
+      ],
+      "id": "b518fe05-00cb-4081-97a5-94d25383da88",
+      "name": "Sticky Note11"
+    },
+    {
+      "parameters": {
+        "content": "## Generate Image",
+        "height": 520,
+        "width": 1540
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -4280,
+        1540
+      ],
+      "id": "f13a204f-32da-48b4-975b-ce949e1be19a",
+      "name": "Sticky Note12"
+    },
+    {
+      "parameters": {
+        "jsCode": "// This function acts as a switch for n8n, generating flexible style guides\n// based on the input word from a previous node\nfunction generateStyleGuide(inputWord) {\n  // Standardize input - convert to lowercase and trim whitespace\n  const input = (inputWord || \"\").trim().toLowerCase();\n  \n  console.log(\"Input received:\", input); // For debugging\n\n  // Define style summaries for different inputs with more flexible, adaptable descriptions\n  const styleSummaries = {\n    \"conceptual\": \"**Soft Minimalist Illustration**: Create a simple, clean illustration with smooth lines and minimal details. Use muted earth tones or soft pastel colors with plenty of negative space. Include basic geometric shapes and simplified representations of key concepts or elements from the content. Focus on conveying meaning through posture, composition, and symbolic forms rather than detailed features. Add subtle textures to create warmth and depth without compromising the minimalist aesthetic.\",\n    \n    \"human\": \"**Lifestyle Photography with Natural Light**: This style emphasizes sincerity, groundedness, and human connection through images of authentic people in contextually relevant settings with natural tones and storytelling setups. It's perfect for showcasing real-world applications, moments of interaction, collaborative environments, or spaces that relate to the content's themes. Adding a slight grain or film aesthetic enhances the warmth and relatability of these images.\",\n    \n    \"strategic\": \"**Editorial Flat Lay or Still Life**: Create a meticulously arranged top-down composition with thoughtfully placed objects. Include elements that represent the main themes, tools, documents, and contextual items arranged with intentional negative space. Use soft, natural lighting with subtle shadows, a neutral color palette with occasional accent colors, and ensure every item appears purposefully positioned rather than randomly scattered. The objects chosen should directly relate to the subject matter being presented.\",\n    \n    \"symbolic\": \"**Illustrated Linework with Accent Colors**: Create a line drawing with clean, confident black or dark gray strokes against a white or light background. Use simple symbolic elements that represent the key concepts, ideas, or components from the content, arranged in a balanced composition. Add strategic pops of color to highlight important elements - just 1-2 accent colors used sparingly. Maintain plenty of white space with minimal shading. The drawing should feel intentional and precise with consistent line weight and clear, recognizable symbols that directly connect to the content's meaning.\",\n    \n    \"reflective\": \"**Muted Collage Aesthetic (Mixed-Media Digital)**: This vulnerable, story-driven, and unique style adds an editorial or personal tone. It incorporates soft cut-out textures, overlapping elements that represent different aspects of the content, warm tones, and occasional hand-written style annotations or highlighted quotes. This aesthetic is ideal for content that bridges personal reflection and practical application, especially when referencing themes of connection, discovery, or personal impact.\"\n  };\n  \n  // Print debug information about the input and available styles\n  console.log(\"Input keyword (lowercase):\", input);\n  console.log(\"Available style keys:\", Object.keys(styleSummaries).join(\", \"));\n  \n  // Get the appropriate style guide based on input\n  let selectedSummary;\n  \n  // Check if the input matches any of our defined styles\n  if (input === \"strategic\") {\n    selectedSummary = styleSummaries[\"strategic\"];\n    console.log(\"Strategic style selected\");\n  } else if (input === \"human\") {\n    selectedSummary = styleSummaries[\"human\"];\n    console.log(\"Human style selected\");\n  } else if (input === \"conceptual\") {\n    selectedSummary = styleSummaries[\"conceptual\"];\n    console.log(\"Conceptual style selected\");\n  } else if (input === \"symbolic\") {\n    selectedSummary = styleSummaries[\"symbolic\"];\n    console.log(\"Symbolic style selected\");\n  } else if (input === \"reflective\") {\n    selectedSummary = styleSummaries[\"reflective\"];\n    console.log(\"Reflective style selected\");\n  } else {\n    // Default style if no match is found\n    selectedSummary = \"**Balanced Versatile Imagery**: Create a clean, modern composition with balanced visual elements. Use natural lighting with moderate contrast and a versatile color palette of neutral tones with subtle accent colors. Include a mix of elements that represent both the concrete and abstract aspects of the content, arranged in a visually pleasing way with good spacing. Aim for a timeless quality rather than trending styles, with clear focus on the core subject matter and professional polish without appearing overly staged.\";\n    console.log(\"No matching style found, using default style\");\n  }\n  \n  console.log(\"Selected style summary:\", selectedSummary.substring(0, 50) + \"...\"); // For debugging\n  \n  // For n8n, return items array with our data\n  return [\n    {\n      json: {\n        styleGuide: selectedSummary,\n        styleKeyword: input\n      }\n    }\n  ];\n}\n\n// Get the input from the previous node's 'content type' field\nconst contentType = $('Identify Topic1').first().json.output['content type'] || \"\";\n\n// Process the input and get result\nconst result = generateStyleGuide(contentType);\n\n// Return the processed data\nreturn result;"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -3900,
+        1660
+      ],
+      "id": "3469a5fe-7c73-4a7c-94b1-8407fa80961b",
+      "name": "getStyle"
+    },
+    {
+      "parameters": {
+        "content": "## Personalize",
+        "height": 380,
+        "width": 320,
+        "color": 5
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -5220,
+        1720
+      ],
+      "id": "39a33d62-c517-4169-ab7d-da8907a6ef89",
+      "name": "Sticky Note13"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Schedule Trigger4": {
+      "main": [
+        [
+          {
+            "node": "getSource1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Research Internet1": {
+      "ai_tool": [
+        [
+          {
+            "node": "Researcher1",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Query Generator1": {
+      "main": [
+        [
+          {
+            "node": "Researcher1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "gpt-4o-mini1": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Researcher1",
+            "type": "ai_languageModel",
+            "index": 0
+          },
+          {
+            "node": "Query Generator1",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "getSource1": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Researcher1": {
+      "main": [
+        [
+          {
+            "node": "getFramework",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "getBrandGuidelines1": {
+      "main": [
+        [
+          {
+            "node": "LinkedIn Writer",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model5": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "LinkedIn Writer",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Identify Topic1",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Airtable1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Image Prompts1": {
+      "main": [
+        [
+          {
+            "node": "Generate Image",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "4o-mini1": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Image Prompts1",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model6": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Identify Topic1",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser3": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "Identify Topic1",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Identify Topic1": {
+      "main": [
+        [
+          {
+            "node": "getStyle",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "getFramework": {
+      "main": [
+        [
+          {
+            "node": "getBrandGuidelines1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "LinkedIn Writer": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate Image": {
+      "main": [
+        [
+          {
+            "node": "Wait1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Download Image1": {
+      "main": [
+        [
+          {
+            "node": "Airtable3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "LinkedIn Image": {
+      "main": [
+        [
+          {
+            "node": "Airtable4",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "LinkedIn Text": {
+      "main": [
+        [
+          {
+            "node": "Airtable",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "getSource2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "getSource2": {
+      "main": [
+        [
+          {
+            "node": "If1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If1": {
+      "main": [
+        [
+          {
+            "node": "getImage",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "LinkedIn Text",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "getImage": {
+      "main": [
+        [
+          {
+            "node": "LinkedIn Image",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait1": {
+      "main": [
+        [
+          {
+            "node": "Download Image1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Over Items": {
+      "main": [
+        [],
+        [
+          {
+            "node": "Query Generator1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Airtable1": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Airtable3": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "RSS Feeds": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "RSS Read": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Limit": {
+      "main": [
+        [
+          {
+            "node": "Filter",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "getContent": {
+      "main": [
+        [
+          {
+            "node": "Markdown",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model1": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "summarizeArticles",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Markdown": {
+      "main": [
+        [
+          {
+            "node": "cleanup",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "summarizeArticles": {
+      "main": [
+        [
+          {
+            "node": "Airtable2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "getURLs": {
+      "main": [
+        [
+          {
+            "node": "Split Out",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split Out": {
+      "main": [
+        [
+          {
+            "node": "Aggregate",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Aggregate": {
+      "main": [
+        [
+          {
+            "node": "RSS Feeds",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filter": {
+      "main": [
+        [
+          {
+            "node": "getContent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Schedule Trigger1": {
+      "main": [
+        [
+          {
+            "node": "getURLs",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Over Items1": {
+      "main": [
+        [
+          {
+            "node": "If2",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "RSS Read",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If2": {
+      "main": [
+        [
+          {
+            "node": "Limit",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "cleanup": {
+      "main": [
+        [
+          {
+            "node": "summarizeArticles",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "getStyle": {
+      "main": [
+        [
+          {
+            "node": "Image Prompts1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "fe64ef67-a0e0-49c6-bf29-dc57c9ccab6e",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "ca3f3f1b54754cc6a8bf7018ef2c4b3d517f36ec4d32b4741e6f00bea7ac9b4a"
+  },
+  "id": "KrnjCiFs73YN4u8y",
+  "tags": [
+    {
+      "createdAt": "2025-03-13T16:37:36.886Z",
+      "updatedAt": "2025-03-13T16:37:36.886Z",
+      "id": "hU9s2XhpioEMJZu3",
+      "name": "YouTube Tutorial"
+    }
+  ]
+}

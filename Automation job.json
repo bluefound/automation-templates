@@ -1,0 +1,379 @@
+{
+  "name": "Job_Search_Automation",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "triggerAtHour": 7
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        320,
+        -140
+      ],
+      "id": "ed888fd9-38e4-4585-aa9f-09a3afba4e0c",
+      "name": "Schedule Trigger"
+    },
+    {
+      "parameters": {
+        "content": "## Retrieve Job Data from adzuna.com Via API",
+        "height": 260,
+        "width": 960,
+        "color": 4
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        260,
+        -260
+      ],
+      "id": "800bc8ec-0934-4464-a3d7-b6a7c23ae429",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "content": "## Analyze and Match Resume to Job",
+        "height": 260,
+        "width": 960,
+        "color": 4
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        260,
+        100
+      ],
+      "id": "1c3748bb-4f5f-4940-9cda-e4c230535a0c",
+      "name": "Sticky Note1"
+    },
+    {
+      "parameters": {
+        "content": "## Write Cover Letter and Update G Sheetss",
+        "height": 260,
+        "width": 960,
+        "color": 4
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        260,
+        460
+      ],
+      "id": "e58b4dbe-1740-4813-b2a9-faaca338e178",
+      "name": "Sticky Note2"
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "gpt-3.5-turbo",
+          "mode": "list",
+          "cachedResultName": "GPT-3.5-TURBO"
+        },
+        "messages": {
+          "values": [
+            {
+              "content": "You're an AI assistant that scores how well a job matches a candidate. Rate from 1 to 5 based on skill, experience, and fit.\nRespond with:\n{\"score\": \"\"}",
+              "role": "system"
+            },
+            {
+              "content": "=Job: {{ $json.message.content.description }}\nCandidate resume:\nJohn Doe\nEmail: johndoe@email.com\nPhone: (555) 555-5555\n\nEDUCATION\nBachelor of Science in Business Administration, Example University\n\nEXPERIENCE\n- Sales Associate at RetailCo (2018–2020): Assisted customers, managed inventory, exceeded sales targets.\n- Customer Service Representative at ServiceCorp (2020–2022): Resolved customer issues, maintained high satisfaction ratings.\n\nSKILLS\n- Communication\n- Problem Solving\n- Teamwork\n\nCERTIFICATIONS\n- Certified Professional (CP)\n\n[End of Resume]"
+            }
+          ]
+        },
+        "jsonOutput": true,
+        "options": {}
+      },
+      "name": "Score Job",
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 1.8,
+      "position": [
+        960,
+        160
+      ],
+      "id": "ced0bd63-edb8-4a46-a3a6-a63801ef652f"
+    },
+    {
+      "parameters": {
+        "values": {
+          "string": [
+            {
+              "name": "job_title",
+              "value": "IT auditor"
+            },
+            {
+              "name": "job_title",
+              "value": "Accountant"
+            }
+          ]
+        },
+        "options": {
+          "dotNotation": false
+        }
+      },
+      "name": "Set Job Title1",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 1,
+      "position": [
+        560,
+        -140
+      ],
+      "id": "e21a4adc-cd33-44cf-8e0d-03208a0752f6"
+    },
+    {
+      "parameters": {
+        "url": "https://api.adzuna.com/v1/api/jobs/us/search/1?app_id=YOUR_APP_ID&app_key=YOUR_APP_KEY&results_per_page=5&what={{$json.job_title}}",
+        "options": {}
+      },
+      "name": "Get Jobs from Adzuna1",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [
+        920,
+        -140
+      ],
+      "id": "51c4b54a-11b3-4af7-a65f-0b78fe9c3107"
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "results",
+        "options": {}
+      },
+      "name": "Split Jobs1",
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [
+        340,
+        160
+      ],
+      "id": "5b1f8c01-c56e-4563-aedf-255018be0741"
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "gpt-3.5-turbo",
+          "mode": "list",
+          "cachedResultName": "GPT-3.5-TURBO"
+        },
+        "messages": {
+          "values": [
+            {
+              "content": "You're an AI that extracts key job info from the following JSON and returns it like this:\n{\"company_name\": \"\",\"location\": \"\",\"description\": \"(short summary max 200 chars)\"}",
+              "role": "system"
+            },
+            {
+              "content": "=Job data:\n{{ JSON.stringify($json) }}"
+            }
+          ]
+        },
+        "jsonOutput": true,
+        "options": {}
+      },
+      "name": "Summarize Job1",
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 1.8,
+      "position": [
+        640,
+        160
+      ],
+      "id": "1248fb03-caaf-4291-8c11-0480e18f241b"
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "mode": "list",
+          "value": ""
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "list",
+          "value": ""
+        }
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        740,
+        520
+      ],
+      "id": "4c58e68b-55b1-445f-b693-cace23b21ecd",
+      "name": "Google Sheets",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "JApbJ9h6h5oQBwh8",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        940,
+        520
+      ],
+      "id": "7c60249d-5444-411f-9eb0-370294589f04",
+      "name": "Gmail1",
+      "webhookId": "c4aa81ae-e4ee-478f-bfc4-723c40abdcdd",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "lcf2yxxzgyjIDVfV",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "gpt-3.5-turbo",
+          "mode": "list",
+          "cachedResultName": "GPT-3.5-TURBO"
+        },
+        "messages": {
+          "values": [
+            {
+              "content": "You're an AI assistant that scores how well a job matches a candidate. Rate from 1 to 5 based on skill, experience, and fit.\nRespond with:\n{\"score\": \"\"}",
+              "role": "system"
+            },
+            {
+              "content": "=Job: {{ $json.message.content.description }}\nCandidate resume:\nJohn Doe\nEmail: johndoe@email.com\nPhone: (555) 555-5555\n\nEDUCATION\nBachelor of Science in Business Administration, Example University\n\nEXPERIENCE\n- Sales Associate at RetailCo (2018–2020): Assisted customers, managed inventory, exceeded sales targets.\n- Customer Service Representative at ServiceCorp (2020–2022): Resolved customer issues, maintained high satisfaction ratings.\n\nSKILLS\n- Communication\n- Problem Solving\n- Teamwork\n\nCERTIFICATIONS\n- Certified Professional (CP)\n\n[End of Resume]"
+            }
+          ]
+        },
+        "jsonOutput": true,
+        "options": {}
+      },
+      "name": "Write Cover Letter1",
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 1.8,
+      "position": [
+        360,
+        520
+      ],
+      "id": "eaf4db44-4d28-4f98-87a1-b4c205c986d7",
+      "credentials": {
+        "openAiApi": {
+          "id": "Q0ffjbJaxsVgolSs",
+          "name": "OpenRouter API"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Set Job Title1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set Job Title1": {
+      "main": [
+        [
+          {
+            "node": "Get Jobs from Adzuna1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Jobs from Adzuna1": {
+      "main": [
+        [
+          {
+            "node": "Split Jobs1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split Jobs1": {
+      "main": [
+        [
+          {
+            "node": "Summarize Job1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Summarize Job1": {
+      "main": [
+        [
+          {
+            "node": "Score Job",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Score Job": {
+      "main": [
+        [
+          {
+            "node": "Write Cover Letter1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Sheets": {
+      "main": [
+        [
+          {
+            "node": "Gmail1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Write Cover Letter1": {
+      "main": [
+        [
+          {
+            "node": "Google Sheets",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "Africa/Lagos",
+    "callerPolicy": "workflowsFromSameOwner"
+  },
+  "versionId": "ca622bc3-731a-4a1b-b807-5bc5e5983a11",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "f2cf6301a998e16084609c8635767c7f2fe71603e7ba21b5457aa517ce5164cb"
+  },
+  "id": "oGkubBx7vHlnSxdU",
+  "tags": []
+}
